@@ -1,0 +1,45 @@
+#include <SPI.h>     
+#include <Mirf.h>     
+#include <nRF24L01.h> 
+#include <MirfHardwareSpiDriver.h> 
+#include <Servo.h>
+
+Servo servo;
+
+void setup() {
+  Serial.begin(9600);
+  servo.attach(3);
+  Mirf.cePin = 9;
+  Mirf.csnPin = 10; 
+  Mirf.spi = &MirfHardwareSpi; 
+  Mirf.init(); 
+  Mirf.channel = 1;
+  Mirf.payload = sizeof(float); 
+  Mirf.config();
+  Mirf.setTADDR((byte *) "radi1"); 
+  Mirf.setRADDR((byte *) "radio"); 
+
+  Serial.println("Reception of the value :"); 
+  pinMode(4,OUTPUT);
+}
+
+void loop() {
+  float value;
+
+  if(Mirf.dataReady()){
+    Mirf.getData((byte *) &value); 
+    Serial.println(value); 
+    if(value>1900)
+    {
+      digitalWrite(4,HIGH);
+      value-= 2000;
+    } else if(value<1900)
+    {
+      digitalWrite(4,LOW);
+    }
+    
+    int degree = map(value, 0, 1080, 45, 125);
+    servo.write(degree);
+    delay(15);
+  }
+}
